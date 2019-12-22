@@ -332,6 +332,12 @@ static int rockchip_pwm_probe(struct platform_device *pdev)
 	struct rockchip_pwm_chip *pc;
 	struct resource *r;
 	int ret, count;
+	bool set_defaults = false;
+	bool default_enabled;
+	unsigned int default_period;
+	unsigned int default_duty_cycle;
+	struct pwm_state default_state;
+	struct pwm_device *pwm;
 
 	id = of_match_device(rockchip_pwm_dt_ids, &pdev->dev);
 	if (!id)
@@ -421,6 +427,35 @@ static int rockchip_pwm_probe(struct platform_device *pdev)
 	if (!pwm_is_enabled(pc->chip.pwms))
 		clk_disable(pc->clk);
 
+	if (of_property_read_u32(pdev->dev.of_node, "default-period", &default_period)) {
+		default_period = 0;
+	} else {
+		set_defaults = true;
+	}
+	if (of_property_read_u32(pdev->dev.of_node, "default-duty-cycle", &default_duty_cycle)) {
+		default_duty_cycle = 0;
+	} else {
+		set_defaults = true;
+	}
+	default_enabled = of_property_read_bool(pdev->dev.of_node, "default-enabled");
+	set_defaults |= set_defaults;
+
+	if (set_defaults) {
+		printk("Setting defaults of PWM %s: period: %u, duty cycle: %u, enabled: %s\n", pdev->dev.of_node->name, default_period, default_duty_cycle, default_enabled ? "true" : "false");
+		pwm = pwm_request_from_chip((struct pwm_chip *)pc, 0, NULL);
+		if (IS_ERR(pwm)) {
+			printk("..But failed to get PWM");
+			goto exit_ok;
+		}
+		pwm_get_state(pwm, &default_state);
+		default_state.period = default_period;
+		default_state.duty_cycle = default_duty_cycle;
+		default_state.enabled = default_enabled;
+		pwm_apply_state(pwm, &default_state);
+	} else {
+		printk("NOT Setting defaults of PWM %s: period: %u, duty cycle: %u, enabled: %s\n", pdev->dev.of_node->name, default_period, default_duty_cycle, default_enabled ? "true" : "false");
+	}
+exit_ok:
 	return 0;
 
 err_pclk:

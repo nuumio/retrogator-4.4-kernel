@@ -205,7 +205,7 @@
 		cooling-min-state = <0>;
 		cooling-max-state = <3>;
 		#cooling-cells = <2>;
-		cooling-levels = <0 80 170 230>;
+		cooling-levels = <0 98 240 255>;
 	}; 
 
 	es8316-sound {
@@ -878,6 +878,66 @@
 	};
 };
 
+&thermal_zones {
+	fan_control: fan-control {
+		polling-delay-passive = <1000>; /* milliseconds */
+		polling-delay = <1000>; /* milliseconds */
+		thermal-sensors = <&tsadc 0>;
+		trips {
+			fan_trip0: fan-trip-0 {
+				temperature = <25000>; /* millicelsius */
+				hysteresis = <2000>; /* millicelsius */
+				type = "active";
+			};
+			fan_trip1: fan-trip-1 {
+				temperature = <35000>; /* millicelsius */
+				hysteresis = <2000>; /* millicelsius */
+				type = "active";
+			};
+			fan_trip2: fan-trip-2 {
+				temperature = <50000>; /* millicelsius */
+				hysteresis = <2000>; /* millicelsius */
+				type = "active";
+			};
+		};
+		cooling-maps {
+			map3 {
+				trip = <&fan_trip0>;
+				cooling-device = <&fan0 0 1>;
+				contribution = <4096>;
+			};
+			map4 {
+				trip = <&fan_trip1>;
+				cooling-device = <&fan0 1 2>;
+				contribution = <4096>;
+			};
+			map5 {
+				trip = <&fan_trip2>;
+				cooling-device = <&fan0 2 3>;
+				contribution = <4096>;
+			};
+		};
+	};
+};
+
+//&trips {
+//	fan_trip0: fan-trip-0 {
+//		temperature = <25000>; /* millicelsius */
+//		hysteresis = <2000>; /* millicelsius */
+//		type = "active";
+//	};
+//	fan_trip1: fan-trip-1 {
+//		temperature = <40000>; /* millicelsius */
+//		hysteresis = <2000>; /* millicelsius */
+//		type = "active";
+//	};
+//	fan_trip2: fan-trip-2 {
+//		temperature = <50000>; /* millicelsius */
+//		hysteresis = <2000>; /* millicelsius */
+//		type = "active";
+//	};
+//};
+
 &threshold {
 	temperature = <75000>;
 };
@@ -889,25 +949,25 @@
 &soc_crit {
 	temperature = <85000>;
 };
-
+/*
 &cooling_maps {
 	map3 {
-		trip = <&threshold>;
+		trip = <&fan_trip0>;
 		cooling-device = <&fan0 0 1>;
 		contribution = <4096>;
 	};
 	map4 {
-		trip = <&target>;
+		trip = <&fan_trip1>;
 		cooling-device = <&fan0 1 2>;
 		contribution = <4096>;
 	};
 	map5 {
-		trip = <&soc_crit>;
+		trip = <&fan_trip2>;
 		cooling-device = <&fan0 2 3>;
 		contribution = <4096>;
  	};
  };
-
+*/
 &tcphy0 {
 	extcon = <&fusb0>;
 	status = "okay";
@@ -1001,6 +1061,10 @@
 &pwm1 {
 	status = "okay";
 	pinctrl-names = "active";
+	//default-period = <55000>;
+	//default-duty-cycle = <21500>;
+	/* default-enabled is bool property; to set disabled remove it, don't set value */
+	//default-enabled = "true";
 };
 
 &pwm2 {
