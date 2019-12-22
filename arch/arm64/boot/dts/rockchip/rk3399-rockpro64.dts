@@ -205,7 +205,8 @@
 		cooling-min-state = <0>;
 		cooling-max-state = <3>;
 		#cooling-cells = <2>;
-		cooling-levels = <0 80 170 230>;
+		cooling-levels = <0 98 125 200>;
+		status = "disabled";
 	}; 
 
 	es8316-sound {
@@ -1001,6 +1002,10 @@
 &pwm1 {
 	status = "okay";
 	pinctrl-names = "active";
+	//default-period = <55000>;
+	//default-duty-cycle = <21500>;
+	/* default-enabled is bool property; to set disabled remove it, don't set value */
+	//default-enabled = "true";
 };
 
 &pwm2 {
