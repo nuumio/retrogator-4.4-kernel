@@ -3821,6 +3821,9 @@ void do_blank_screen(int entering_gfx)
 
 	WARN_CONSOLE_UNLOCKED();
 
+	pr_debug("nuumio: do_blank_screen enter");
+	dump_stack();
+
 	if (console_blanked) {
 		if (blank_state == blank_vesa_wait) {
 			blank_state = blank_off;
@@ -3831,6 +3834,7 @@ void do_blank_screen(int entering_gfx)
 
 	/* entering graphics mode? */
 	if (entering_gfx) {
+		pr_debug("nuumio: do_blank_screen entering_gfx");
 		hide_cursor(vc);
 		save_screen(vc);
 		vc->vc_sw->con_blank(vc, -1, 1);
@@ -3840,12 +3844,15 @@ void do_blank_screen(int entering_gfx)
 		return;
 	}
 
-	if (blank_state != blank_normal_wait)
+	if (blank_state != blank_normal_wait) {
+		pr_debug("nuumio: do_blank_screen blank_state != blank_normal_wait");
 		return;
+	}
 	blank_state = blank_off;
 
 	/* don't blank graphics */
 	if (vc->vc_mode != KD_TEXT) {
+		pr_debug("nuumio: do_blank_screen don't blank graphics");
 		console_blanked = fg_console + 1;
 		return;
 	}
@@ -3878,6 +3885,9 @@ EXPORT_SYMBOL(do_blank_screen);
 void do_unblank_screen(int leaving_gfx)
 {
 	struct vc_data *vc;
+
+	pr_debug("nuumio: do_unblank_screen");
+	dump_stack();
 
 	/* This should now always be called from a "sane" (read: can schedule)
 	 * context for the sake of the low level drivers, except in the special
@@ -3937,7 +3947,11 @@ void unblank_screen(void)
  */
 static void blank_screen_t(unsigned long dummy)
 {
+	pr_debug("nuumio: blank_screen_t timer was hit");
+	dump_stack();
+
 	if (unlikely(!keventd_up())) {
+		pr_debug("nuumio: blank_screen_t inside 'if (unlikely(!keventd_up()))' -> don't react, just restart timer");
 		mod_timer(&console_timer, jiffies + (blankinterval * HZ));
 		return;
 	}
@@ -3948,6 +3962,9 @@ static void blank_screen_t(unsigned long dummy)
 void poke_blanked_console(void)
 {
 	WARN_CONSOLE_UNLOCKED();
+
+	pr_debug("nuumio: poke_blanked_console");
+	dump_stack();
 
 	/* Add this so we quickly catch whoever might call us in a non
 	 * safe context. Nowadays, unblank_screen() isn't to be called in

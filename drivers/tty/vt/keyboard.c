@@ -29,6 +29,7 @@
 #include <linux/sched.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
+#include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/string.h>
 #include <linux/init.h>
@@ -1466,6 +1467,10 @@ static void kbd_event(struct input_handle *handle, unsigned int event_type,
 	spin_unlock(&kbd_event_lock);
 
 	tasklet_schedule(&keyboard_tasklet);
+
+	pr_debug("nuumio: kbd_event, will poke");
+	dump_stack();
+
 	do_poke_blanked_console = 1;
 	schedule_console_callback();
 }

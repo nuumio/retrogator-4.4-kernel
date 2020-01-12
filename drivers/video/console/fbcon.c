@@ -3279,6 +3279,8 @@ static int fbcon_event_notify(struct notifier_block *self,
 				  action == FB_EVENT_FB_UNREGISTERED))
 		goto done;
 
+	pr_debug("nuumio: fbcon_event_notify action = %lu", action);
+
 	switch(action) {
 	case FB_EVENT_SUSPEND:
 		fbcon_suspended(info);
