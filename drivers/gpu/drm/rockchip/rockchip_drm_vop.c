@@ -1229,11 +1229,17 @@ static void vop_crtc_load_lut(struct drm_crtc *crtc)
 	struct vop *vop = to_vop(crtc);
 	int i, dle, lut_idx = 0;
 
-	if (!vop->is_enabled || !vop->lut || !vop->lut_regs)
-		return;
+	dev_dbg(vop->dev, "RKVOP: enter vop_crtc_load_lut\n");
 
-	if (WARN_ON(!drm_modeset_is_locked(&crtc->mutex)))
+	if (!vop->is_enabled || !vop->lut || !vop->lut_regs) {
+		dev_dbg(vop->dev, "RKVOP: exit vop_crtc_load_lut 1 error\n");
 		return;
+	}
+
+	if (WARN_ON(!drm_modeset_is_locked(&crtc->mutex))) {
+		dev_dbg(vop->dev, "RKVOP: exit vop_crtc_load_lut 2 error\n");
+		return;
+	}
 
 	if (!VOP_CTRL_SUPPORT(vop, update_gamma_lut)) {
 		spin_lock(&vop->reg_lock);
@@ -1270,6 +1276,7 @@ static void vop_crtc_load_lut(struct drm_crtc *crtc)
 		VOP_CTRL_SET(vop, update_gamma_lut, 0);
 	}
 #undef CTRL_GET
+	dev_dbg(vop->dev, "RKVOP: exit vop_crtc_load_lut 3 OK\n");
 }
 
 void rockchip_vop_crtc_fb_gamma_set(struct drm_crtc *crtc, u16 red, u16 green,
@@ -1391,6 +1398,9 @@ static void vop_crtc_disable(struct drm_crtc *crtc)
 	int sys_status = drm_crtc_index(crtc) ?
 				SYS_STATUS_LCDC1 : SYS_STATUS_LCDC0;
 
+	dev_dbg(vop->dev, "RKVOP: enter vop_crtc_disable\n");
+	dump_stack();
+
 	vop_lock(vop);
 	VOP_CTRL_SET(vop, reg_done_frm, 1);
 	VOP_CTRL_SET(vop, dsp_interlace, 0);
@@ -1447,11 +1457,14 @@ static void vop_crtc_disable(struct drm_crtc *crtc)
 
 		crtc->state->event = NULL;
 	}
+	dev_dbg(vop->dev, "RKVOP: enter vop_crtc_disable\n");
 }
 
 static void vop_plane_destroy(struct drm_plane *plane)
 {
+	pr_debug("RKVOP: enter vop_plane_destroy\n");
 	drm_plane_cleanup(plane);
+	pr_debug("RKVOP: exit vop_plane_destroy\n");
 }
 
 static int vop_plane_prepare_fb(struct drm_plane *plane,
@@ -1862,18 +1875,22 @@ static void vop_atomic_plane_reset(struct drm_plane *plane)
 	struct vop_plane_state *vop_plane_state =
 					to_vop_plane_state(plane->state);
 
+	pr_debug("RKVOP: enter vop_atomic_plane_reset\n");
 	if (plane->state && plane->state->fb)
 		drm_framebuffer_unreference(plane->state->fb);
 
 	kfree(vop_plane_state);
 	vop_plane_state = kzalloc(sizeof(*vop_plane_state), GFP_KERNEL);
-	if (!vop_plane_state)
+	if (!vop_plane_state) {
+		pr_debug("RKVOP: exit vop_atomic_plane_reset mem alloc fail\n");
 		return;
+	}
 
 	vop_plane_state->zpos = win->zpos;
 	vop_plane_state->global_alpha = 0xff;
 	plane->state = &vop_plane_state->base;
 	plane->state->plane = plane;
+	pr_debug("RKVOP: exit vop_atomic_plane_reset OK\n");
 }
 
 static struct drm_plane_state *
@@ -2485,17 +2502,26 @@ static void vop_crtc_close(struct drm_crtc *crtc)
 {
 	struct vop *vop = NULL;
 
-	if (!crtc)
+	if (!crtc) {
+		pr_debug("RKVOP: enter/exit vop_crtc_close, no crtc\n");
 		return;
+	}
 	vop = to_vop(crtc);
+
+	dev_dbg(vop->dev, "RKVOP: enter vop_crtc_close\n");
+	dump_stack();
+
 	mutex_lock(&vop->vop_lock);
 	if (!vop->is_enabled) {
 		mutex_unlock(&vop->vop_lock);
+		dev_dbg(vop->dev, "RKVOP: exit vop_crtc_close 1 !vop->is_enabled\n");
 		return;
 	}
 
 	vop_disable_all_planes(vop);
 	mutex_unlock(&vop->vop_lock);
+
+	dev_dbg(vop->dev, "RKVOP: exit vop_crtc_close 2 OK\n");
 }
 
 static void vop_crtc_send_mcu_cmd(struct drm_crtc *crtc,  u32 type, u32 value)
@@ -2549,6 +2575,9 @@ static bool vop_crtc_mode_fixup(struct drm_crtc *crtc,
 	struct vop *vop = to_vop(crtc);
 	const struct vop_data *vop_data = vop->data;
 
+	dev_dbg(vop->dev, "RKVOP: enter vop_crtc_mode_fixup\n");
+	dump_stack();
+
 	if (mode->hdisplay > vop_data->max_output.width)
 		return false;
 
@@ -2560,6 +2589,8 @@ static bool vop_crtc_mode_fixup(struct drm_crtc *crtc,
 
 	adj_mode->crtc_clock =
 		clk_round_rate(vop->dclk, adj_mode->crtc_clock * 1000) / 1000;
+
+	dev_dbg(vop->dev, "RKVOP: exit vop_crtc_mode_fixup\n");
 
 	return true;
 }
@@ -2718,6 +2749,9 @@ static void vop_crtc_enable(struct drm_crtc *crtc)
 	int for_ddr_freq = 0;
 	bool dclk_inv;
 
+	dev_dbg(vop->dev, "RKVOP: enter vop_crtc_enable\n");
+	dump_stack();
+
 	rockchip_set_system_status(sys_status);
 	vop_lock(vop);
 	DRM_DEV_INFO(vop->dev, "Update mode to %dx%d%s%d, type: %d\n",
@@ -2875,6 +2909,8 @@ static void vop_crtc_enable(struct drm_crtc *crtc)
 	enable_irq(vop->irq);
 	drm_crtc_vblank_on(crtc);
 	vop_unlock(vop);
+
+	dev_dbg(vop->dev, "RKVOP: exit vop_crtc_enable\n");
 }
 
 static int vop_zpos_cmp(const void *a, const void *b)
