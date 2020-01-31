@@ -837,7 +837,6 @@
 	sd-uhs-sdr104;
 	vqmmc-supply = <&vcc1v8_sdio>;	/* IO line */
 	vmmc-supply = <&vcc_sdio>;		/* card's power */
-	defer_pcie = <3500>;		/* wait 3500 ms (max) for PCIe driver to load */
 	status = "okay";
 };
 
